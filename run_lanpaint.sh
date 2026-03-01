@@ -27,16 +27,16 @@
 #     --mask "https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_9/Masked_Load_Me_in_Loader.png"
 
 # Z-Image Turbo Inpaint
-python run_lanpaint.py --model z-image \
-    --lp-n-steps 5 \
-    --lp-friction 15.0 \
-    --lp-lambda 16 \
-    --seed 0 \
-    --guidance-scale 1.0 \
-    --num-steps 9 \
-    --prompt "Latina female with thick wavy hair, white shirt, harbor boats and pastel houses behind. Breezy seaside light, warm tones, cinematic close-up." \
-    --image "https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_21/Original_No_Mask.png" \
-    --mask "https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_21/Masked_Load_Me_in_Loader.png"
+# python run_lanpaint.py --model z-image \
+#     --lp-n-steps 5 \
+#     --lp-friction 15.0 \
+#     --lp-lambda 16 \
+#     --seed 0 \
+#     --guidance-scale 1.0 \
+#     --num-steps 9 \
+#     --prompt "Latina female with thick wavy hair, white shirt, harbor boats and pastel houses behind. Breezy seaside light, warm tones, cinematic close-up." \
+#     --image "https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_21/Original_No_Mask.png" \
+#     --mask "https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_21/Masked_Load_Me_in_Loader.png"
 
 # Z-Image Turbo Outpaint
 # python run_lanpaint.py --model z-image \
@@ -50,3 +50,14 @@ python run_lanpaint.py --model z-image \
 #     --image "https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_22/Original_No_Mask.png" \
 #     --outpaint-pad "l200r200t200b200" \
 
+# Qwen Image Edit Inpaint
+python run_lanpaint.py --model qwen \
+    --lp-n-steps 6 \
+    --lp-friction 15.0 \
+    --lp-lambda 16 \
+    --seed 42 \
+    --guidance-scale 4.0 \
+    --num-steps 20 \
+    --prompt "a pink flower in a glass vase on a wooden table, snowy mountains in the background" \
+    --image "./results/qwen/input.png" \
+    --mask "./results/qwen/mask_invert.png"

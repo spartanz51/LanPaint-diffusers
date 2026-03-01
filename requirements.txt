@@ -5,6 +5,7 @@
 #   https://github.com/scraed/LanPaint
 git+https://github.com/scraed/LanPaint.git
 torch==2.8.0
+torchvision==0.25.0
 # diffusers 0.37.0.dev0 is not on PyPI; install from GitHub (needed for Flux2Klein, Z-Image, etc.)
 git+https://github.com/huggingface/diffusers.git
 transformers==4.57.6

@@ -9,6 +9,7 @@ Training-free diffusion inpainting and outpainting with [LanPaint](https://githu
   - **Flux2 Klein** (`flux-klein`)
   - **Z-Image Turbo** (`z-image`)
   - **Stable Diffusion 3** (`sd3`)
+  - **Qwen Image** (`qwen`) — thanks [@spartanz51](https://github.com/spartanz51)
 - **Extensible**: More LanPaint-supported models will be added over time; new backends are integrated via the adapter registry.
 
 ---
@@ -56,6 +57,7 @@ The script includes ready-to-run examples for:
 - **Flux2 Klein** (inpaint, URL or local image + mask)
 - **SD3** (inpaint with example prompt and URLs)
 - **Z-Image Turbo** (inpaint and outpaint, with `--outpaint-pad`)
+- **Qwen Image** (inpaint )
 
 **Quick reference** (same CLI, custom args):
 
@@ -64,6 +66,16 @@ The script includes ready-to-run examples for:
 
 **Useful options**: `--guidance-scale`, `--num-steps`, `--seed`, `--output <path>`, `--model-id <hf-or-local-path>`, `--save-preprocess-dir <dir>`, `--local-files-only`
 
+### Mask convention (`--mask`)
+
+The pipeline supports both standalone mask images and RGBA masks:
+
+- **Binary/grayscale mask image** (`L` mode or RGB converted to grayscale):
+  - **0** (black, or normalized **0.0**) = region to be edited (inpaint area)
+  - **255** (white, or normalized **1.0**) = region to keep (non-editable)
+- **RGBA mask image** (mask stored in alpha channel):
+  - **alpha = 0** = region to be edited (inpaint area)
+  - **alpha = 255** = region to keep (non-editable)
 ---
 
 ## Results Showcase
@@ -96,11 +108,12 @@ LanPaint-diffusers/
     ├── __init__.py
     ├── model_adapter.py   # Abstract adapter interface
     ├── pipeline.py        # LanPaintInpaintPipeline (orchestrator)
-    ├── registry.py        # Model registry (flux-klein, sd3, z-image)
+    ├── registry.py        # Model registry (flux-klein, sd3, z-image, qwen)
     ├── utils.py           # Blend, time helpers, image loading
     └── adapters/
         ├── __init__.py
         ├── flux_klein.py  # Flux2KleinAdapter
+        ├── qwen.py        # QwenAdapter
         ├── sd3.py         # SD3Adapter
         └── z_image.py     # ZImageAdapter
 ```

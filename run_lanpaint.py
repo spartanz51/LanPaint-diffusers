@@ -26,8 +26,10 @@ No new scripts needed.
 
 import argparse
 import os
+import random
 import sys
 
+import numpy as np
 import torch
 
 from lanpaint_pipeline import LanPaintConfig, LanPaintInpaintPipeline
@@ -96,6 +98,15 @@ def parse_args():
     return parser.parse_args()
 
 
+def set_global_seed(seed: int) -> None:
+    """Set global RNG seeds for reproducibility."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
 def main():
     args = parse_args()
 
@@ -114,6 +125,9 @@ def main():
     else:
         if args.mask is None:
             raise ValueError("Missing --mask. For outpaint, use --outpaint-pad instead.")
+
+    # Unify global RNG state across Python/NumPy/PyTorch.
+    set_global_seed(args.seed)
 
     # Resolve model-specific defaults
     spec = get_model_spec(args.model)
