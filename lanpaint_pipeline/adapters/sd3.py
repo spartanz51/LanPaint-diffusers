@@ -41,6 +41,37 @@ class SD3Adapter(ModelAdapter):
 
     # ---- ModelAdapter implementation ----
 
+    def set_conditioning(self, positive_conditioning, negative_conditioning=None):
+        """
+        Inject pre-encoded SD3 conditioning tensor [B, seq_len, hidden].
+
+        Also sets pooled projections. If negative is absent, uses zeros.
+        """
+        if isinstance(positive_conditioning, dict):
+            self._prompt_embeds = positive_conditioning["prompt_embeds"]
+            self._pooled = positive_conditioning["pooled_prompt_embeds"]
+        else:
+            self._prompt_embeds = positive_conditioning
+            self._pooled = None
+
+        if negative_conditioning is not None:
+            if isinstance(negative_conditioning, dict):
+                self._neg_prompt_embeds = negative_conditioning["prompt_embeds"]
+                self._neg_pooled = negative_conditioning["pooled_prompt_embeds"]
+            else:
+                self._neg_prompt_embeds = negative_conditioning
+                self._neg_pooled = None
+        else:
+            self._neg_prompt_embeds = torch.zeros_like(self._prompt_embeds)
+            self._neg_pooled = torch.zeros_like(self._pooled) if self._pooled is not None else None
+
+        self._prompt_bundle = PromptBundle(data={
+            "prompt_embeds": self._prompt_embeds,
+            "neg_prompt_embeds": self._neg_prompt_embeds,
+            "pooled": self._pooled,
+            "neg_pooled": self._neg_pooled,
+        })
+
     def encode_prompt(self, prompt: str, negative_prompt: str, device: torch.device) -> PromptBundle:
         (
             self._prompt_embeds,
