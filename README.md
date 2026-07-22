@@ -8,6 +8,7 @@ Training-free diffusion inpainting and outpainting with [LanPaint](https://githu
 - **Multi-model**: One CLI and one pipeline API for all supported backends. Currently supported:
   - **Flux2 Klein** (`flux-klein`)
   - **Z-Image Turbo** (`z-image`)
+  - **Krea 2** (`krea2`)
   - **Stable Diffusion 3** (`sd3`)
   - **Qwen Image** (`qwen`) — thanks [@spartanz51](https://github.com/spartanz51)
 - **Extensible**: More LanPaint-supported models will be added over time; new backends are integrated via the adapter registry.
@@ -57,6 +58,7 @@ The script includes ready-to-run examples for:
 - **Flux2 Klein** (inpaint, URL or local image + mask)
 - **SD3** (inpaint with example prompt and URLs)
 - **Z-Image Turbo** (inpaint and outpaint, with `--outpaint-pad`)
+- **Krea 2 Turbo** (inpaint)
 - **Qwen Image** (inpaint )
 
 **Quick reference** (same CLI, custom args):
@@ -80,7 +82,7 @@ The pipeline supports both standalone mask images and RGBA masks:
 
 ## Results Showcase
 
-Below are visual examples for `flux-klein`, `z-image`, and `qwen`.
+Below are visual examples for `flux-klein`, `z-image`, `krea2`, and `qwen`.
 
 ### Flux2 Klein (Example 24)
 
@@ -93,6 +95,12 @@ Below are visual examples for `flux-klein`, `z-image`, and `qwen`.
 | Original | Masked | Diffusers Version | ComfyUI Version |
 |:--------:|:------:|:-----------------:|:---------------:|
 | ![Original Z-Image](https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_21/Original_No_Mask.png) | ![Masked Z-Image](https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_21/Masked_Load_Me_in_Loader.png) | ![Inpainted Z-Image Diffusers](results/z-image/lanpaint_output.png) | ![Inpainted Z-Image ComfyUI](https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_21/InPainted_Drag_Me_to_ComfyUI.png) |
+
+### Krea 2 Turbo (Example 28)
+
+| Original | Masked | Diffusers Version | ComfyUI Version |
+|:--------:|:------:|:-----------------:|:---------------:|
+| ![Original Krea 2](https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_28/Original_No_Mask.png) | ![Masked Krea 2](https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_28/Masked_Load_Me_in_Loader.png) | ![Inpainted Krea 2 Diffusers](results/krea2/lanpaint_output.png) | ![Inpainted Krea 2 ComfyUI](https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_28/InPainted_Drag_Me_to_ComfyUI.png) |
 
 ### Qwen Image Edit (Example 14)
 
@@ -114,11 +122,12 @@ LanPaint-diffusers/
     ├── __init__.py
     ├── model_adapter.py   # Abstract adapter interface
     ├── pipeline.py        # LanPaintInpaintPipeline (orchestrator)
-    ├── registry.py        # Model registry (flux-klein, sd3, z-image, qwen)
+    ├── registry.py        # Model registry (flux-klein, sd3, z-image, krea2, qwen)
     ├── utils.py           # Blend, time helpers, image loading
     └── adapters/
         ├── __init__.py
         ├── flux_klein.py  # Flux2KleinAdapter
+        ├── krea2.py       # Krea2Adapter
         ├── qwen.py        # QwenAdapter
         ├── sd3.py         # SD3Adapter
         └── z_image.py     # ZImageAdapter

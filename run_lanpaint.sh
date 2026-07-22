@@ -50,6 +50,16 @@
 #     --image "https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_22/Original_No_Mask.png" \
 #     --outpaint-pad "l200r200t200b200" \
 
+# Krea 2 Turbo Inpaint
+# python run_lanpaint.py --model krea2 \
+#     --lp-n-steps 5 \
+#     --seed 0 \
+#     --guidance-scale 0.0 \
+#     --num-steps 8 \
+#     --prompt "A high-resolution, surreal digital illustration showing a woman's hand in a red glove holding a martini glass, overlaid with whimsical expressive ink-style doodles, muted minimalist sketch style" \
+#     --image "https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_28/Original_No_Mask.png" \
+#     --mask "https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_28/Masked_Load_Me_in_Loader.png"
+
 # Qwen Image Edit Inpaint
 python run_lanpaint.py --model qwen \
     --prompt "change the girl's cloth to red evening gown" \

@@ -150,6 +150,15 @@ register_model("z-image", ModelSpec(
     default_params={"guidance_scale": 5.0, "num_inference_steps": 20},
 ))
 
+register_model("krea2", ModelSpec(
+    name="Krea 2 Turbo",
+    pipeline_cls_path="diffusers.Krea2Pipeline",
+    adapter_cls_path="lanpaint_pipeline.adapters.krea2.Krea2Adapter",
+    default_model_id="krea/Krea-2-Turbo",
+    default_dtype=torch.bfloat16,
+    default_params={"guidance_scale": 0.0, "num_inference_steps": 8},
+))
+
 register_model("qwen", ModelSpec(
     name="Qwen Image Edit",
     pipeline_cls_path="diffusers.QwenImageEditPlusPipeline",
