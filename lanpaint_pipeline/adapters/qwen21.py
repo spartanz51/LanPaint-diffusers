@@ -125,13 +125,18 @@ class Qwen21Adapter(ModelAdapter):
 
     def set_conditioning(self, positive_conditioning, negative_conditioning=None):
         """
-        Inject pre-encoded conditioning: dicts with prompt_embeds,
-        prompt_embeds_mask and img_mask (the joint-sequence mask, target slots included).
+        Inject pre-encoded conditioning for the next run (called with prompt=None):
+        dicts with prompt_embeds, prompt_embeds_mask and img_mask (the joint-sequence
+        mask, target slots included). Every call replaces the previous request's
+        conditioning; without a negative, the empty prompt is encoded if CFG needs one.
         """
         self._prompt_embeds = positive_conditioning["prompt_embeds"]
         self._prompt_embeds_mask = positive_conditioning.get("prompt_embeds_mask")
         self._img_mask = positive_conditioning["img_mask"]
-        if negative_conditioning is not None:
+        self._neg_prompt_str = ""
+        if negative_conditioning is None:
+            self._neg_prompt_embeds = self._neg_prompt_embeds_mask = self._neg_img_mask = None
+        else:
             self._neg_prompt_embeds = negative_conditioning["prompt_embeds"]
             self._neg_prompt_embeds_mask = negative_conditioning.get("prompt_embeds_mask")
             self._neg_img_mask = negative_conditioning["img_mask"]
@@ -139,7 +144,9 @@ class Qwen21Adapter(ModelAdapter):
         self._prompt_bundle = PromptBundle(data=dict(positive_conditioning))
 
     def encode_prompt(self, prompt: str, negative_prompt: str, device: torch.device) -> PromptBundle:
-        """Store raw strings: the VL encoder needs the reference, available in encode_and_prepare()."""
+        """Store raw strings: the VL encoder needs the reference, available in encode_and_prepare().
+        A text prompt replaces any conditioning injected for an earlier run."""
+        self._conditioning_preloaded = False
         self._prompt_str = prompt
         self._neg_prompt_str = negative_prompt or ""
         self._prompt_bundle = PromptBundle(data={"prompt": prompt, "negative_prompt": self._neg_prompt_str})
@@ -219,11 +226,13 @@ class Qwen21Adapter(ModelAdapter):
 
     def prepare_timesteps(self, num_steps: int, device: torch.device) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        QwenImage21Pipeline's schedule: sigmas (linspace(1, 1/N, N) unless
-        self.sigmas is set) shifted by mu = calculate_shift(target tokens).
+        QwenImage21Pipeline's schedule, shifted by mu = calculate_shift(target tokens).
+        The sigmas are self.sigmas, else the checkpoint's sample_sigmas, else
+        linspace(1, 1/N, N); the first two set the number of steps.
         """
-        if self.sigmas is not None:
-            sigmas = np.array(self.sigmas, dtype=np.float64)
+        sigmas = self.sigmas if self.sigmas is not None else self.pipe.config.sample_sigmas
+        if sigmas is not None:
+            sigmas = np.array(sigmas, dtype=np.float64)
             num_steps = len(sigmas)
         else:
             sigmas = np.linspace(1.0, 1.0 / num_steps, num_steps)

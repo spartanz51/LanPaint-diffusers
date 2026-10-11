@@ -15,10 +15,11 @@ import torch
 from PIL import Image
 
 pytest.importorskip("diffusers.pipelines.qwenimage21.pipeline_qwenimage21")
-from diffusers import FlowMatchEulerDiscreteScheduler, QwenImage21Pipeline  # noqa: E402
+from diffusers import FlowMatchEulerDiscreteScheduler, QwenImage21Pipeline, QwenImage21Transformer2DModel  # noqa: E402
 from diffusers.image_processor import VaeImageProcessor  # noqa: E402
 
 from lanpaint_pipeline.adapters.qwen21 import Qwen21Adapter  # noqa: E402
+from lanpaint_pipeline.pipeline import LanPaintConfig, LanPaintInpaintPipeline  # noqa: E402
 from lanpaint_pipeline.registry import check_adapter_options  # noqa: E402
 
 
@@ -56,6 +57,7 @@ def make_adapter():
                                                      max_image_seq_len=8192, base_shift=0.5, max_shift=0.9)
     pipe.transformer = StubTransformer()
     pipe._execution_device = torch.device("cpu")
+    pipe.config = SimpleNamespace(sample_sigmas=None)  # the checkpoint sets none
     pipe._pack_latents = QwenImage21Pipeline._pack_latents
     pipe._unpack_latents = QwenImage21Pipeline._unpack_latents
 
@@ -246,3 +248,71 @@ def test_adapter_options_are_checked_against_the_model():
     check_adapter_options("qwen-image-2.1", ["reference_image", "mask_mode", "sigmas"])
     with pytest.raises(ValueError, match="mask_mode"):
         check_adapter_options("qwen", ["mask_mode"])
+
+
+def injected(value):
+    return {"prompt_embeds": torch.full((1, 6, 8), value), "img_mask": torch.ones(1, 14, dtype=torch.bool)}
+
+
+def test_a_text_prompt_replaces_injected_conditioning():
+    adapter = make_encoding_adapter()
+    adapter.set_conditioning(injected(7.0), injected(9.0))
+    adapter.encode_prompt("a new request", "", torch.device("cpu"))
+    adapter.encode_and_prepare(torch.zeros(1, 3, 64, 64), 64, 64, None, torch.device("cpu"))
+    assert len(adapter.pipe.shown) == 1  # the new prompt reached the VL encoder
+    assert adapter._neg_prompt_embeds is None  # its negative is encoded on first CFG use
+
+
+def test_injected_conditioning_without_negative_drops_the_previous_one():
+    adapter = make_encoding_adapter()
+    adapter.encode_prompt("first", "blurry", torch.device("cpu"))
+    adapter.set_conditioning(injected(7.0), injected(9.0))
+    adapter.set_conditioning(injected(1.0))
+    assert adapter._neg_prompt_embeds is None and adapter._neg_img_mask is None
+    assert adapter._neg_prompt_str == ""  # not the first request's "blurry"
+
+
+def test_checkpoint_sample_sigmas_set_the_schedule_unless_overridden():
+    adapter = make_adapter()
+    adapter.pipe.config = SimpleNamespace(sample_sigmas=[1.0, 0.9375, 0.875, 0.75, 0.5, 0.25])
+    timesteps, flow_ts = adapter.prepare_timesteps(40, torch.device("cpu"))
+    assert len(timesteps) == len(flow_ts) == 6
+    adapter.sigmas = [1.0, 0.5, 0.25]
+    timesteps, flow_ts = adapter.prepare_timesteps(40, torch.device("cpu"))
+    assert len(timesteps) == len(flow_ts) == 3
+
+
+def test_kv_cache_matches_an_uncached_run_of_a_real_transformer():
+    torch.manual_seed(44)
+    adapter = make_adapter()
+    adapter.pipe.transformer = QwenImage21Transformer2DModel(
+        num_layers=2, num_attention_heads=1, attention_head_dim=32, context_in_dim=8,
+        axes_dims_rope=(8, 12, 12), mlp_ratio=2).eval()
+    adapter._img_mask = torch.tensor([[False, True, True, True, True, False, True, True, True, True]])
+    adapter._neg_img_mask = adapter._img_mask.clone()
+    adapter._ref_latents = torch.randn(1, 16, 64)
+    adapter._prompt_embeds = torch.randn(1, 6, 8)
+    adapter._neg_prompt_embeds = torch.randn(1, 6, 8)
+    adapter._new_caches()
+    with torch.no_grad():
+        for t in (1.0, 0.75, 0.2):  # the prefix is extracted at 1.0, then read from the cache
+            x = torch.randn(1, 16, 64)
+            cached = adapter.predict_x0(x, t, 4.0, -0.5)
+            caches = adapter._cond_cache, adapter._neg_cache
+            adapter._cond_cache = adapter._neg_cache = None
+            uncached = adapter.predict_x0(x, t, 4.0, -0.5)
+            adapter._cond_cache, adapter._neg_cache = caches
+            for got, want in zip(cached, uncached):
+                torch.testing.assert_close(got, want, atol=2e-5, rtol=2e-5)
+
+
+def test_a_full_lanpaint_run_extracts_the_prefix_once():
+    adapter = make_encoding_adapter()
+    pipe = LanPaintInpaintPipeline(adapter, LanPaintConfig(n_steps=2, blend_overlap=0))
+    mask = np.full((64, 64), 255, np.uint8)
+    mask[16:48, 16:48] = 0
+    out = pipe(prompt="edit", image=Image.new("RGB", (64, 64), "gray"), mask_image=Image.fromarray(mask),
+               height=64, width=64, num_inference_steps=3, guidance_scale=1.0, seed=4)
+    assert out.images[0].size == (64, 64)
+    # 3 steps and 2 inner steps on the first two: 7 calls, the first one fills the cache
+    assert adapter.pipe.transformer.modes == ["extract"] + ["cached"] * 6
