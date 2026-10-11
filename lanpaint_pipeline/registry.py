@@ -168,3 +168,14 @@ register_model("qwen", ModelSpec(
     default_params={"guidance_scale": 4.0, "num_inference_steps": 20},
     requires_ref_at_inference=True,
 ))
+
+register_model("qwen-image-2.1", ModelSpec(
+    name="Qwen-Image 2.1",
+    pipeline_cls_path="diffusers.QwenImage21Pipeline",
+    adapter_cls_path="lanpaint_pipeline.adapters.qwen21.Qwen21Adapter",
+    default_model_id="Qwen/Qwen-Image-2.1",
+    default_dtype=torch.bfloat16,
+    # LanPaint's own Qwen-Image 2.1 example (ComfyUI): 20 steps, CFG 4
+    default_params={"guidance_scale": 4.0, "num_inference_steps": 20},
+    requires_ref_at_inference=True,
+))
