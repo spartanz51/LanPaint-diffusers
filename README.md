@@ -27,7 +27,7 @@ Training-free diffusion inpainting and outpainting with [LanPaint](https://githu
 
 - Python 3.10+ (3.12 tested), NVIDIA GPU and CUDA-compatible PyTorch recommended.
 - **LanPaint** and **diffusers** are installed from GitHub (see `requirements.txt`); 
-- **Qwen Image 2.1** needs diffusers 0.41 or later (`QwenImage21Pipeline`), which in turn needs transformers 5.
+- **Qwen Image 2.1** needs diffusers 0.41 or later (`QwenImage21Pipeline`).
 
 ```bash
 cd LanPaint-diffusers   # or your clone path
