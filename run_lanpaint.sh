@@ -69,3 +69,13 @@ python run_lanpaint.py --model qwen \
     --num-steps 20 \
     --guidance-scale 2.5 \
     --lp-n-steps 5
+
+# Qwen Image 2.1 Inpaint
+# python run_lanpaint.py --model qwen-image-2.1 \
+#     --prompt "change the girl's cloth to red evening gown" \
+#     --image "https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_14/Original_No_Mask.png" \
+#     --mask "https://raw.githubusercontent.com/scraed/LanPaint/master/examples/Example_14/Masked_Load_Me_in_Loader.png" \
+#     --seed 0 \
+#     --num-steps 20 \
+#     --guidance-scale 4.0 \
+#     --lp-n-steps 5

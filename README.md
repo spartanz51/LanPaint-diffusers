@@ -11,6 +11,7 @@ Training-free diffusion inpainting and outpainting with [LanPaint](https://githu
   - **Krea 2** (`krea2`)
   - **Stable Diffusion 3** (`sd3`)
   - **Qwen Image** (`qwen`) — thanks [@spartanz51](https://github.com/spartanz51)
+  - **Qwen Image 2.1** (`qwen-image-2.1`)
 - **Extensible**: More LanPaint-supported models will be added over time; new backends are integrated via the adapter registry.
 
 ## Documentation
@@ -26,6 +27,7 @@ Training-free diffusion inpainting and outpainting with [LanPaint](https://githu
 
 - Python 3.10+ (3.12 tested), NVIDIA GPU and CUDA-compatible PyTorch recommended.
 - **LanPaint** and **diffusers** are installed from GitHub (see `requirements.txt`); 
+- **Qwen Image 2.1** needs diffusers 0.41 or later (`QwenImage21Pipeline`), which in turn needs transformers 5.
 
 ```bash
 cd LanPaint-diffusers   # or your clone path
@@ -65,6 +67,7 @@ The script includes ready-to-run examples for:
 - **Z-Image Turbo** (inpaint and outpaint, with `--outpaint-pad`)
 - **Krea 2 Turbo** (inpaint)
 - **Qwen Image** (inpaint )
+- **Qwen Image 2.1** (inpaint)
 
 **Quick reference** (same CLI, custom args):
 
@@ -72,6 +75,11 @@ The script includes ready-to-run examples for:
 - Outpaint: `--model <name> --prompt "..." --image <path> --outpaint-pad l200r200t200b200` (no `--mask`; do not use `--height`/`--width` with `--outpaint-pad`)
 
 **Useful options**: `--guidance-scale`, `--num-steps`, `--seed`, `--output <path>`, `--model-id <hf-or-local-path>`, `--save-preprocess-dir <dir>`, `--local-files-only`
+
+**Qwen Image 2.1 options**:
+
+- `--reference-image <path-or-URL>`: the picture the model is shown, instead of `--image` (for example the photo with the area to change outlined). The kept pixels still come from `--image`.
+- `--mask-mode majority|any_edit|nearest`: how the pixel mask maps to latents, each covering 16x16 pixels. `majority` (default) keeps a latent when most of its pixels are kept; `any_edit` edits it as soon as one of its pixels is masked; `nearest` samples one pixel per latent, as ComfyUI LanPaint does.
 
 ### Mask convention (`--mask`)
 
@@ -127,13 +135,14 @@ LanPaint-diffusers/
     ├── __init__.py
     ├── model_adapter.py   # Abstract adapter interface
     ├── pipeline.py        # LanPaintInpaintPipeline (orchestrator)
-    ├── registry.py        # Model registry (flux-klein, sd3, z-image, krea2, qwen)
+    ├── registry.py        # Model registry (flux-klein, sd3, z-image, krea2, qwen, qwen-image-2.1)
     ├── utils.py           # Blend, time helpers, image loading
     └── adapters/
         ├── __init__.py
         ├── flux_klein.py  # Flux2KleinAdapter
         ├── krea2.py       # Krea2Adapter
         ├── qwen.py        # QwenAdapter
+        ├── qwen21.py      # Qwen21Adapter
         ├── sd3.py         # SD3Adapter
         └── z_image.py     # ZImageAdapter
 ```
