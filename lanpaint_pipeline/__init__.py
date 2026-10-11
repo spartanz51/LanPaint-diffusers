@@ -28,6 +28,7 @@ from lanpaint_pipeline.pipeline import (
     LanPaintOutput,
 )
 from lanpaint_pipeline.registry import (
+    check_adapter_options,
     create_adapter,
     get_model_spec,
     list_models,
@@ -57,6 +58,7 @@ __all__ = [
     "gaussian_kernel_2d",
     "blend_with_smooth_mask",
     "load_image_preserve_alpha",
+    "check_adapter_options",
     "create_adapter",
     "get_model_spec",
     "list_models",

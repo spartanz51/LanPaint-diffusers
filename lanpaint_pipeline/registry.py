@@ -73,6 +73,14 @@ def get_model_spec(key: str) -> ModelSpec:
     return MODEL_REGISTRY[key]
 
 
+def check_adapter_options(model_key: str, names) -> None:
+    """Refuse overrides the model's adapter does not declare, before any weights load."""
+    AdapterClass = _import_class(get_model_spec(model_key).adapter_cls_path)
+    unknown = [name for name in names if not hasattr(AdapterClass, name)]
+    if unknown:
+        raise ValueError(f"Model '{model_key}' has no adapter option: {', '.join(unknown)}")
+
+
 def create_adapter(
     model_key: str,
     *,

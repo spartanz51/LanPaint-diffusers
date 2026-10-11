@@ -34,6 +34,7 @@ import torch
 
 from lanpaint_pipeline import LanPaintConfig, LanPaintInpaintPipeline
 from lanpaint_pipeline.registry import (
+    check_adapter_options,
     create_adapter,
     get_model_spec,
     list_models,
@@ -95,6 +96,13 @@ def parse_args():
     parser.add_argument("--lp-cfg-big", type=float, default=1.0)
     parser.add_argument("--lp-blend-overlap", type=int, default=9)
 
+    # Adapter options (only models whose adapter declares them; Qwen Image 2.1 for now)
+    parser.add_argument("--reference-image", type=str, default=None,
+                        help="Path or URL to the picture the model is shown instead of --image; "
+                             "the kept pixels still come from --image")
+    parser.add_argument("--mask-mode", type=str, default=None, choices=["majority", "any_edit", "nearest"],
+                        help="How the pixel mask maps to latents (default: the adapter's own)")
+
     return parser.parse_args()
 
 
@@ -134,6 +142,15 @@ def main():
     guidance_scale = args.guidance_scale or spec.default_params.get("guidance_scale", 5.0)
     num_steps = args.num_steps or spec.default_params.get("num_inference_steps", 20)
 
+    # Adapter options, checked before the model loads
+    adapter_options = {}
+    if args.reference_image is not None:
+        from diffusers.utils import load_image
+        adapter_options["reference_image"] = load_image(args.reference_image)
+    if args.mask_mode is not None:
+        adapter_options["mask_mode"] = args.mask_mode
+    check_adapter_options(args.model, adapter_options)
+
     # Create adapter (loads model)
     model_id = args.model_id
     from_pretrained_kwargs = {}
@@ -160,6 +177,8 @@ def main():
         model_id=model_id,
         **from_pretrained_kwargs,
     )
+    for name, value in adapter_options.items():
+        setattr(adapter, name, value)
 
     # Build LanPaint config
     lp_config = LanPaintConfig(

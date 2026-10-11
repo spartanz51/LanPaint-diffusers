@@ -19,6 +19,7 @@ from diffusers import FlowMatchEulerDiscreteScheduler, QwenImage21Pipeline  # no
 from diffusers.image_processor import VaeImageProcessor  # noqa: E402
 
 from lanpaint_pipeline.adapters.qwen21 import Qwen21Adapter  # noqa: E402
+from lanpaint_pipeline.registry import check_adapter_options  # noqa: E402
 
 
 class StubTransformer:
@@ -240,3 +241,8 @@ def test_unknown_mask_mode_is_refused():
     with pytest.raises(ValueError, match="mask_mode"):
         adapter.mask_to_latent_space(torch.ones(1, 1, 64, 64))
 
+
+def test_adapter_options_are_checked_against_the_model():
+    check_adapter_options("qwen-image-2.1", ["reference_image", "mask_mode", "sigmas"])
+    with pytest.raises(ValueError, match="mask_mode"):
+        check_adapter_options("qwen", ["mask_mode"])
